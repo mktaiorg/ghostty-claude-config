@@ -11,7 +11,7 @@ FILTER="${1:-}"
 
 echo "Watching Claude writes${FILTER:+ under ${FILTER/#$HOME/~}}  (Ctrl+C to stop)"
 tail -n 300 -F "$LOG" 2>/dev/null \
-  | jq --unbuffered -r '[.timestamp[11:19], .tool, .file] | join("\u001f")' 2>/dev/null \
+  | jq --unbuffered -r 'def clean: tostring | explode | map(select((. >= 32 and . < 127) or . > 159)) | implode; [.timestamp[11:19], .tool, .file] | map(clean) | join("\u001f")' 2>/dev/null \
   | while IFS=$'\x1f' read -r ts tool file; do
     [[ -z "$file" ]] && continue
     [[ -n "$FILTER" && "$file" != "$FILTER"* ]] && continue

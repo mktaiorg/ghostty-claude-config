@@ -10,31 +10,42 @@
 CTX_WARN_TOKENS="${CTX_WARN_TOKENS:-300000}"
 CTX_STOP_TOKENS="${CTX_STOP_TOKENS:-500000}"
 MAX_FILES="${STATUSLINE_MAX_FILES:-4}"
+[[ "$CTX_WARN_TOKENS" =~ ^[0-9]+$ ]] || CTX_WARN_TOKENS=300000
+[[ "$CTX_STOP_TOKENS" =~ ^[0-9]+$ ]] || CTX_STOP_TOKENS=500000
+[[ "$MAX_FILES" =~ ^[0-9]+$ ]] || MAX_FILES=4
 
 input=$(cat)
 
 # One jq call; fields joined with the ASCII unit separator so empty values survive `read`.
 IFS=$'\x1f' read -r cwd model effort tokens ctx_size cost dur_ms added removed \
     five_pct five_reset seven_pct cache_warm cache_ttl agent_name transcript <<<"$(echo "$input" | jq -r '
-  [ (.workspace.current_dir // .cwd // ""),
-    (.model.display_name // ""),
-    (.effort.level // ""),
-    (.context_window.total_input_tokens // "" | tostring),
-    (.context_window.context_window_size // "" | tostring),
-    (.cost.total_cost_usd // "" | tostring),
-    (.cost.total_duration_ms // "" | tostring),
-    (.cost.total_lines_added // 0 | tostring),
-    (.cost.total_lines_removed // 0 | tostring),
-    (.rate_limits.five_hour.used_percentage // "" | tostring),
-    (.rate_limits.five_hour.resets_at // "" | tostring),
-    (.rate_limits.seven_day.used_percentage // "" | tostring),
-    (.prompt_cache.warm // "" | tostring),
-    (.prompt_cache.ttl // ""),
-    (.agent.name // ""),
-    (.transcript_path // "")
+  def clean: tostring | explode | map(select((. >= 32 and . < 127) or . > 159)) | implode;
+  [ (.workspace.current_dir // .cwd // "" | clean),
+    (.model.display_name // "" | clean),
+    (.effort.level // "" | clean),
+    ((.context_window.total_input_tokens | numbers) // "" | tostring),
+    ((.context_window.context_window_size | numbers) // "" | tostring),
+    ((.cost.total_cost_usd | numbers) // "" | tostring),
+    ((.cost.total_duration_ms | numbers) // "" | tostring),
+    ((.cost.total_lines_added | numbers) // 0 | tostring),
+    ((.cost.total_lines_removed | numbers) // 0 | tostring),
+    ((.rate_limits.five_hour.used_percentage | numbers) // "" | tostring),
+    ((.rate_limits.five_hour.resets_at | numbers) // "" | tostring),
+    ((.rate_limits.seven_day.used_percentage | numbers) // "" | tostring),
+    (.prompt_cache.warm | if type == "boolean" then tostring else "" end),
+    (.prompt_cache.ttl // "" | clean),
+    (.agent.name // "" | clean),
+    (.transcript_path // "" | clean)
   ] | join("\u001f")' 2>/dev/null)"
 
-[[ -z "$cwd" ]] && cwd="$PWD"
+
+# Accept only plain numbers before any bash arithmetic (arithmetic evaluates embedded code).
+for v in tokens ctx_size cost dur_ms added removed five_pct five_reset seven_pct; do
+    [[ "${!v}" =~ ^[0-9]+(\.[0-9]+)?$ ]] || printf -v "$v" '%s' ""
+done
+[[ -z "$added" ]] && added=0
+[[ -z "$removed" ]] && removed=0
+[[ -z "$cwd" ]] && cwd=$(printf '%s' "$PWD" | LC_ALL=C tr -d '\000-\037\177')
 
 BLD=$'\033[1m'; DIM=$'\033[2m'; RST=$'\033[0m'; YEL=$'\033[33m'; RED=$'\033[31m'; GRN=$'\033[32m'
 SEP=" ${DIM}|${RST} "
@@ -53,7 +64,8 @@ cwd_link=$'\033]8;;'"$cwd_url"$'\033\\'"📂 ${BLD}${cwd_display}${RST}"$'\033]8
 # --- Git repo + branch, when inside one ---
 project_part=""
 if branch=$(git -C "$cwd" branch --show-current 2>/dev/null); then
-    repo=$(basename "$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)")
+        branch=$(printf '%s' "$branch" | LC_ALL=C tr -d '\000-\037\177')
+    repo=$(basename "$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)" | LC_ALL=C tr -d '\000-\037\177')
     project_part="${DIM}git${RST} $repo ${DIM}(${branch:-detached})${RST}"
 fi
 
@@ -120,7 +132,7 @@ done
 line3=""
 if [[ -f "$transcript" ]]; then
     files=$(grep -E '"name":"(Edit|Write|NotebookEdit)"' "$transcript" 2>/dev/null \
-        | jq -r '.message.content[]? | select(.type=="tool_use" and (.name=="Edit" or .name=="Write" or .name=="NotebookEdit")) | .input.file_path // .input.notebook_path // empty' 2>/dev/null \
+        | jq -r 'def clean: tostring | explode | map(select((. >= 32 and . < 127) or . > 159)) | implode; .message.content[]? | select(.type=="tool_use" and (.name=="Edit" or .name=="Write" or .name=="NotebookEdit")) | (.input.file_path // .input.notebook_path // empty) | clean | select(length > 0)' 2>/dev/null \
         | awk '{a[NR]=$0} END {for (i=NR; i>=1; i--) if (!seen[a[i]]++) print a[i]}')
     if [[ -n "$files" ]]; then
         total=$(printf '%s\n' "$files" | wc -l | tr -d ' ')
