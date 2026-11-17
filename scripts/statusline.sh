@@ -1,6 +1,6 @@
 #!/bin/bash
 # Claude Code status line
-#   Line 1: project (git repo + branch, or folder) | folder | model + effort | context tokens
+#   Line 1: full working folder (Cmd+click opens it in Finder) | git repo + branch | model + effort | context tokens
 #   Line 2: session cost | elapsed time | lines +/- | 5-hour and 7-day usage limits | prompt cache state
 #   Line 3: files this session created or edited, newest first (Cmd+click opens in VS Code)
 #
@@ -36,7 +36,7 @@ IFS=$'\x1f' read -r cwd model effort tokens ctx_size cost dur_ms added removed \
 
 [[ -z "$cwd" ]] && cwd="$PWD"
 
-DIM=$'\033[2m'; RST=$'\033[0m'; YEL=$'\033[33m'; RED=$'\033[31m'; GRN=$'\033[32m'
+BLD=$'\033[1m'; DIM=$'\033[2m'; RST=$'\033[0m'; YEL=$'\033[33m'; RED=$'\033[31m'; GRN=$'\033[32m'
 SEP=" ${DIM}|${RST} "
 
 # Color a percentage: yellow >= 70, red >= 90.
@@ -45,21 +45,16 @@ pct_color() {
     if (( p >= 90 )); then printf '%s' "$RED"; elif (( p >= 70 )); then printf '%s' "$YEL"; fi
 }
 
-# --- Folder display: ~ for home; keep first two and last segment when long ---
+# --- Folder: full path (~ for home), never shortened; Cmd+click opens it in Finder ---
 cwd_display="${cwd/#$HOME/~}"
-IFS='/' read -ra parts <<<"$cwd_display"
-n=${#parts[@]}
-if (( n > 4 )); then
-    cwd_display="${parts[0]}/${parts[1]}/.../${parts[$((n-1))]}"
-fi
+cwd_url="file://$(printf '%s' "$cwd" | sed -e 's/%/%25/g' -e 's/ /%20/g' -e 's/#/%23/g' -e 's/?/%3F/g')/"
+cwd_link=$'\033]8;;'"$cwd_url"$'\033\\'"📂 ${BLD}${cwd_display}${RST}"$'\033]8;;\033\\'
 
-# --- Project segment: git repo + branch, else folder ---
+# --- Git repo + branch, when inside one ---
+project_part=""
 if branch=$(git -C "$cwd" branch --show-current 2>/dev/null); then
     repo=$(basename "$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null)")
-    project_part="📁 $repo ${DIM}(${branch:-detached})${RST}"
-else
-    project_part="📁 $cwd_display"
-    cwd_display=""
+    project_part="${DIM}git${RST} $repo ${DIM}(${branch:-detached})${RST}"
 fi
 
 # --- Model + effort ---
@@ -86,8 +81,8 @@ if [[ -n "$tokens" && "$tokens" != "0" ]]; then
     ctx_part="$ctx_part${RST}"
 fi
 
-line1="$project_part"
-[[ -n "$cwd_display" ]] && line1="$line1$SEP$cwd_display"
+line1="$cwd_link"
+[[ -n "$project_part" ]] && line1="$line1$SEP$project_part"
 [[ -n "$model_part" ]] && line1="$line1$SEP$model_part"
 [[ -n "$ctx_part" ]] && line1="$line1$SEP$ctx_part"
 

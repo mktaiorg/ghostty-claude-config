@@ -9,11 +9,12 @@ A status line and a live file feed for running Claude Code in the Ghostty termin
 **Status line** (three lines under the Claude Code prompt):
 
 ```
-📁 my-repo (main) | Opus high | ctx 350K/1M wrap up
+📂 ~/code/my-repo | git my-repo (main) | Opus high | ctx 350K/1M wrap up
 $4.19 | 1h30m | +120 -8 | 5h 74% resets 10:08pm | 7d 41% | cache warm 1h
 edited  parser.py  README.md  +3 more
 ```
 
+- The full path of the folder Claude is working in, never shortened. Cmd+click it to open the folder in Finder. Change folders with Claude Code's built-in `/cd <folder>`.
 - Context shown in absolute tokens, yellow with "wrap up" at 300K and red with "handoff now" at 500K (set `CTX_WARN_TOKENS` / `CTX_STOP_TOKENS` to change).
 - Session cost, elapsed time, lines changed, 5-hour and 7-day usage limits (yellow at 70%, red at 90%), prompt cache warm or cold.
 - Files this session created or edited. Cmd+click a name to open it in VS Code.
