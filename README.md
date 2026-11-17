@@ -2,6 +2,8 @@
 
 A status line and a live file feed for running Claude Code in the Ghostty terminal (they work in most other terminals too).
 
+![Example output: status line under the Claude Code prompt, live write feed in a split pane](docs/preview.svg)
+
 ## What you get
 
 **Status line** (three lines under the Claude Code prompt):

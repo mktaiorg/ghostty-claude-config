@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="380" viewBox="0 0 1100 380" font-family="Menlo, 'SF Mono', Consolas, monospace" font-size="15">
+  <title>Example output: Claude Code status line (left) and live write feed (right)</title>
+  <rect width="1100" height="380" rx="12" fill="#1e1f29"/>
+  <rect width="1100" height="34" rx="12" fill="#2a2c3a"/>
+  <rect y="22" width="1100" height="12" fill="#2a2c3a"/>
+  <circle cx="22" cy="17" r="6" fill="#ff5f57"/><circle cx="42" cy="17" r="6" fill="#febc2e"/><circle cx="62" cy="17" r="6" fill="#28c840"/>
+  <text x="550" y="22" fill="#8b8fa3" text-anchor="middle" font-size="13">example output</text>
+  <line x1="640" y1="34" x2="640" y2="380" stroke="#3a3d4f" stroke-width="2"/>
+
+  <!-- left pane: Claude Code -->
+  <text x="20" y="70" fill="#8b8fa3">&gt; refactor the parser and update the docs</text>
+  <text x="20" y="100" fill="#cdd1e0">● Done. Updated parser.py and README.md.</text>
+  <line x1="20" y1="250" x2="620" y2="250" stroke="#3a3d4f"/>
+  <text x="20" y="280" fill="#cdd1e0">📁 my-repo <tspan fill="#6c7086">(main) |</tspan> Opus <tspan fill="#6c7086">high |</tspan> <tspan fill="#f9c74f">ctx 350K/1M wrap up</tspan></text>
+  <text x="20" y="308" fill="#cdd1e0">$4.19 <tspan fill="#6c7086">|</tspan> 1h30m <tspan fill="#6c7086">|</tspan> <tspan fill="#7bd88f">+120</tspan> <tspan fill="#fc618d">-8</tspan> <tspan fill="#6c7086">|</tspan> <tspan fill="#f9c74f">5h 74%</tspan> <tspan fill="#6c7086">resets 10:08pm |</tspan> 7d 41%</text>
+  <text x="20" y="336" fill="#6c7086">edited <tspan fill="#cdd1e0" text-decoration="underline">parser.py</tspan>  <tspan fill="#cdd1e0" text-decoration="underline">README.md</tspan>  <tspan fill="#cdd1e0" text-decoration="underline">test_parser.py</tspan></text>
+
+  <!-- right pane: cw feed -->
+  <text x="660" y="70" fill="#cdd1e0">$ cw</text>
+  <text x="660" y="96" fill="#cdd1e0">Watching Claude writes under ~/my-repo</text>
+  <text x="660" y="126" font-size="13"><tspan fill="#6c7086">14:02:11</tspan> <tspan fill="#f9c74f">~ edit</tspan> <tspan fill="#cdd1e0">file:///…/my-repo/parser.py</tspan></text>
+  <text x="660" y="150" font-size="13"><tspan fill="#6c7086">14:02:40</tspan> <tspan fill="#7bd88f">+ new </tspan> <tspan fill="#cdd1e0">file:///…/my-repo/test_parser.py</tspan></text>
+  <text x="660" y="174" font-size="13"><tspan fill="#6c7086">14:03:05</tspan> <tspan fill="#f9c74f">~ edit</tspan> <tspan fill="#cdd1e0">file:///…/my-repo/README.md</tspan></text>
+</svg>
